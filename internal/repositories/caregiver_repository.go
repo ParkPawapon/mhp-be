@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"github.com/ParkPawapon/mhp-be/internal/constants"
 	"github.com/ParkPawapon/mhp-be/internal/domain"
 	"github.com/ParkPawapon/mhp-be/internal/models/db"
 )

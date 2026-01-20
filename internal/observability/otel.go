@@ -5,8 +5,9 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/ParkPawapon/mhp-be/internal/config"
 )
@@ -26,8 +27,8 @@ func InitTracerProvider(cfg config.ObservabilityConfig) (func(context.Context) e
 		return nil, err
 	}
 
-	tp := trace.NewTracerProvider(
-		trace.WithResource(res),
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithResource(res),
 	)
 	otel.SetTracerProvider(tp)
 

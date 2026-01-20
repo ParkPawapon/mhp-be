@@ -21,8 +21,4 @@ seed:
 	go run ./cmd/seed
 
 gen-jwt-secret:
-	@python3 - <<'PY'
-import base64
-import secrets
-print(base64.urlsafe_b64encode(secrets.token_bytes(64)).decode().rstrip('='))
-PY
+	@python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(64)).decode().rstrip('='))"

@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgerrcode"
 	"gorm.io/gorm"
 
 	"github.com/ParkPawapon/mhp-be/internal/constants"
@@ -32,7 +31,7 @@ func NewUserRepository(dbConn *gorm.DB) UserRepository {
 func (r *userRepository) Create(ctx context.Context, user *db.User) error {
 	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return domain.NewError(constants.UserConflict, "user already exists")
 		}
 		return domain.WrapError(constants.InternalError, "create user failed", err)
