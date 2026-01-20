@@ -115,8 +115,45 @@ func Load() (Config, error) {
 	if err := env.Parse(&cfg); err != nil {
 		return Config{}, err
 	}
+	if err := cfg.Validate(); err != nil {
+		return Config{}, err
+	}
 
 	return cfg, nil
+}
+
+func (c Config) Validate() error {
+	env := strings.ToLower(strings.TrimSpace(c.App.Env))
+	if env == "production" || env == "prod" {
+		if c.HTTP.EnableSwagger {
+			return fmt.Errorf("HTTP_ENABLE_SWAGGER must be false in production")
+		}
+		secret := strings.TrimSpace(c.JWT.Secret)
+		if secret == "" || strings.EqualFold(secret, "change_me") || len(secret) < 32 {
+			return fmt.Errorf("JWT_SECRET must be set and at least 32 characters in production")
+		}
+		if strings.TrimSpace(c.CORS.AllowedOrigins) == "" || c.CORS.AllowedOrigins == "*" {
+			return fmt.Errorf("CORS_ALLOWED_ORIGINS must be explicit in production")
+		}
+		if strings.TrimSpace(c.DB.Password) == "" {
+			return fmt.Errorf("DB_PASSWORD must be set in production")
+		}
+	}
+
+	if strings.TrimSpace(c.HTTP.TLSCertFile) != "" && strings.TrimSpace(c.HTTP.TLSKeyFile) == "" {
+		return fmt.Errorf("TLS_KEY_FILE is required when TLS_CERT_FILE is set")
+	}
+	if strings.TrimSpace(c.HTTP.TLSKeyFile) != "" && strings.TrimSpace(c.HTTP.TLSCertFile) == "" {
+		return fmt.Errorf("TLS_CERT_FILE is required when TLS_KEY_FILE is set")
+	}
+
+	if strings.EqualFold(strings.TrimSpace(c.SMS.Provider), "thaibulksms") {
+		if strings.TrimSpace(c.SMS.ThaiBulkSMS.APIKey) == "" || strings.TrimSpace(c.SMS.ThaiBulkSMS.APISecret) == "" {
+			return fmt.Errorf("THAIBULKSMS_API_KEY and THAIBULKSMS_API_SECRET are required")
+		}
+	}
+
+	return nil
 }
 
 func (c DBConfig) DSN() string {

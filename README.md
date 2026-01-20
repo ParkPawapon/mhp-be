@@ -20,15 +20,19 @@ Production backend for STIN Smart Care (Mobile + Web). This service uses Go, Gin
    ```bash
    cp .env.example .env
    ```
-2) Start dependencies:
+2) Generate a JWT secret (optional for local, required for production):
+   ```bash
+   make gen-jwt-secret
+   ```
+3) Start dependencies:
    ```bash
    docker compose up -d postgres redis
    ```
-3) Run migrations:
+4) Run migrations:
    ```bash
    make migrate-up
    ```
-4) Run the API:
+5) Run the API:
    ```bash
    make dev
    ```
