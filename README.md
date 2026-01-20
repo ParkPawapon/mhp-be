@@ -6,6 +6,7 @@ Production backend for STIN Smart Care (Mobile + Web). This service uses Go, Gin
 - `SYSTEM_CONVENTIONS.md` is the single source of truth for naming, API envelope, errors, and security.
 - `docs/STYLE_GUIDE.md` covers code patterns and testing.
 - `docs/API_CONTRACT.md` documents endpoints and envelopes.
+- `docs/PRODUCTION_CHECKLIST.md` provides deployment and ops checklist.
 - Module path: `github.com/ParkPawapon/mhp-be`.
 
 ## Requirements

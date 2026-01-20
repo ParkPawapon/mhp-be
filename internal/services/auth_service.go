@@ -32,11 +32,11 @@ type AuthService interface {
 }
 
 type authService struct {
-	cfg     config.Config
+	cfg      config.Config
 	authRepo repositories.AuthRepository
 	userRepo repositories.UserRepository
-	redis   *redis.Client
-	sms     SmsSender
+	redis    *redis.Client
+	sms      SmsSender
 }
 
 func NewAuthService(cfg config.Config, authRepo repositories.AuthRepository, userRepo repositories.UserRepository, redisClient *redis.Client, sms SmsSender) AuthService {
@@ -82,7 +82,7 @@ func (s *authService) RequestOTP(ctx context.Context, phone, purpose, ip string)
 	}
 
 	if s.sms != nil {
-		_ = s.sms.SendOTP(phone, otpCode, refCode)
+		_ = s.sms.SendOTP(ctx, phone, otpCode, refCode)
 	}
 
 	return dto.RequestOTPResponse{RefCode: refCode, ExpiresAt: expiresAt}, nil

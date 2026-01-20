@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -59,26 +61,29 @@ func main() {
 	profileRepo := repositories.NewProfileRepository(db)
 	caregiverRepo := repositories.NewCaregiverRepository(db)
 
-	smsSender := services.ConsoleSender{Logger: logger}
+	smsSender, err := newSmsSender(cfg, logger)
+	if err != nil {
+		logger.Fatal("sms sender init failed", zap.Error(err))
+	}
 	authService := services.NewAuthService(cfg, authRepo, userRepo, redisClient, smsSender)
 	userService := services.NewUserService(userRepo, profileRepo, redisClient)
 	caregiverService := services.NewCaregiverService(caregiverRepo)
 
 	router := httptransport.NewRouter(httptransport.Dependencies{
-		Config:            cfg,
-		Logger:            logger,
-		DB:                db,
-		Redis:             redisClient,
-		AuthService:       authService,
-		UserService:       userService,
-		CaregiverService:  caregiverService,
-		MedicineService:   services.NewMedicineService(),
-		IntakeService:     services.NewIntakeService(),
-		HealthService:     services.NewHealthService(),
+		Config:             cfg,
+		Logger:             logger,
+		DB:                 db,
+		Redis:              redisClient,
+		AuthService:        authService,
+		UserService:        userService,
+		CaregiverService:   caregiverService,
+		MedicineService:    services.NewMedicineService(),
+		IntakeService:      services.NewIntakeService(),
+		HealthService:      services.NewHealthService(),
 		AppointmentService: services.NewAppointmentService(),
-		ContentService:    services.NewContentService(),
-		AdminService:      services.NewAdminService(),
-		AuditService:      services.NewAuditService(),
+		ContentService:     services.NewContentService(),
+		AdminService:       services.NewAdminService(),
+		AuditService:       services.NewAuditService(),
 	})
 
 	addr := server.Address(cfg.HTTP.Host, cfg.HTTP.Port)
@@ -108,4 +113,18 @@ func main() {
 		logger.Fatal("server shutdown failed", zap.Error(err))
 	}
 	logger.Info("server stopped")
+}
+
+func newSmsSender(cfg config.Config, logger *zap.Logger) (services.SmsSender, error) {
+	provider := strings.ToLower(strings.TrimSpace(cfg.SMS.Provider))
+	switch provider {
+	case "", "console":
+		return services.ConsoleSender{Logger: logger}, nil
+	case "disabled", "none":
+		return nil, nil
+	case "thaibulksms":
+		return services.NewThaiBulkSMSSender(cfg.SMS.ThaiBulkSMS, logger)
+	default:
+		return nil, fmt.Errorf("unsupported sms provider: %s", cfg.SMS.Provider)
+	}
 }

@@ -11,14 +11,15 @@ import (
 )
 
 type Config struct {
-	App         AppConfig
-	HTTP        HTTPConfig
-	DB          DBConfig
-	Redis       RedisConfig
-	JWT         JWTConfig
-	OTP         OTPConfig
-	RateLimit   RateLimitConfig
-	CORS        CORSConfig
+	App           AppConfig
+	HTTP          HTTPConfig
+	DB            DBConfig
+	Redis         RedisConfig
+	JWT           JWTConfig
+	OTP           OTPConfig
+	SMS           SMSConfig
+	RateLimit     RateLimitConfig
+	CORS          CORSConfig
 	Observability ObservabilityConfig
 }
 
@@ -29,16 +30,16 @@ type AppConfig struct {
 }
 
 type HTTPConfig struct {
-	Host         string        `env:"HTTP_HOST" envDefault:"0.0.0.0"`
-	Port         int           `env:"HTTP_PORT" envDefault:"8080"`
-	ReadTimeout  time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"15s"`
-	WriteTimeout time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"15s"`
-	IdleTimeout  time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"60s"`
-	BasePath     string        `env:"HTTP_BASE_PATH" envDefault:"/api/v1"`
-	EnableSwagger bool         `env:"HTTP_ENABLE_SWAGGER" envDefault:"true"`
-	EnableMetrics bool         `env:"HTTP_ENABLE_METRICS" envDefault:"true"`
-	TLSCertFile  string        `env:"TLS_CERT_FILE"`
-	TLSKeyFile   string        `env:"TLS_KEY_FILE"`
+	Host          string        `env:"HTTP_HOST" envDefault:"0.0.0.0"`
+	Port          int           `env:"HTTP_PORT" envDefault:"8080"`
+	ReadTimeout   time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"15s"`
+	WriteTimeout  time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"15s"`
+	IdleTimeout   time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"60s"`
+	BasePath      string        `env:"HTTP_BASE_PATH" envDefault:"/api/v1"`
+	EnableSwagger bool          `env:"HTTP_ENABLE_SWAGGER" envDefault:"true"`
+	EnableMetrics bool          `env:"HTTP_ENABLE_METRICS" envDefault:"true"`
+	TLSCertFile   string        `env:"TLS_CERT_FILE"`
+	TLSKeyFile    string        `env:"TLS_KEY_FILE"`
 }
 
 type DBConfig struct {
@@ -73,6 +74,22 @@ type OTPConfig struct {
 	RefCodeLength int           `env:"OTP_REF_CODE_LENGTH" envDefault:"6"`
 }
 
+type SMSConfig struct {
+	Provider    string `env:"SMS_PROVIDER" envDefault:"console"`
+	ThaiBulkSMS ThaiBulkSMSConfig
+}
+
+type ThaiBulkSMSConfig struct {
+	BaseURL     string        `env:"THAIBULKSMS_BASE_URL" envDefault:"https://api.thaibulksms.com"`
+	Endpoint    string        `env:"THAIBULKSMS_ENDPOINT" envDefault:"/sms"`
+	APIKey      string        `env:"THAIBULKSMS_API_KEY"`
+	APISecret   string        `env:"THAIBULKSMS_API_SECRET"`
+	SenderID    string        `env:"THAIBULKSMS_SENDER_ID"`
+	AuthMode    string        `env:"THAIBULKSMS_AUTH_MODE" envDefault:"basic"`
+	OTPTemplate string        `env:"THAIBULKSMS_OTP_TEMPLATE" envDefault:"Your OTP is {{otp}} (ref: {{ref}})"`
+	Timeout     time.Duration `env:"THAIBULKSMS_TIMEOUT" envDefault:"10s"`
+}
+
 type RateLimitConfig struct {
 	OTPPerPhone int           `env:"OTP_RATE_LIMIT_PER_PHONE" envDefault:"5"`
 	OTPPerIP    int           `env:"OTP_RATE_LIMIT_PER_IP" envDefault:"5"`
@@ -80,10 +97,10 @@ type RateLimitConfig struct {
 }
 
 type CORSConfig struct {
-	AllowedOrigins  string `env:"CORS_ALLOWED_ORIGINS" envDefault:"*"`
-	AllowedMethods  string `env:"CORS_ALLOWED_METHODS" envDefault:"GET,POST,PATCH,DELETE,OPTIONS"`
-	AllowedHeaders  string `env:"CORS_ALLOWED_HEADERS" envDefault:"Authorization,Content-Type,X-Request-Id"`
-	AllowCredentials bool  `env:"CORS_ALLOW_CREDENTIALS" envDefault:"false"`
+	AllowedOrigins   string `env:"CORS_ALLOWED_ORIGINS" envDefault:"*"`
+	AllowedMethods   string `env:"CORS_ALLOWED_METHODS" envDefault:"GET,POST,PATCH,DELETE,OPTIONS"`
+	AllowedHeaders   string `env:"CORS_ALLOWED_HEADERS" envDefault:"Authorization,Content-Type,X-Request-Id"`
+	AllowCredentials bool   `env:"CORS_ALLOW_CREDENTIALS" envDefault:"false"`
 }
 
 type ObservabilityConfig struct {
