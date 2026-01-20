@@ -64,6 +64,7 @@ Use this as a baseline for STIN Smart Care. Adjust items based on your actual in
 - Set CPU/memory limits (K8s) or instance sizing (VM)
 - Horizontal scaling with stateless API
 - Ensure Redis and DB can handle peak load
+
 ## 11) Runbook
 - Incident response checklist
 - On-call contacts
