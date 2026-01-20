@@ -1,0 +1,20 @@
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS health_content;
+DROP TABLE IF EXISTS nurse_visit_notes;
+DROP TABLE IF EXISTS appointments;
+DROP TABLE IF EXISTS daily_assessments;
+DROP TABLE IF EXISTS health_records;
+DROP TABLE IF EXISTS intake_history;
+DROP TABLE IF EXISTS medicine_schedules;
+DROP TABLE IF EXISTS patient_medicines;
+DROP TABLE IF EXISTS medicines_master;
+DROP TABLE IF EXISTS auth_otp_codes;
+DROP TABLE IF EXISTS caregiver_assignments;
+DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS users;
+
+DROP TYPE IF EXISTS appt_status_type;
+DROP TYPE IF EXISTS appt_category;
+DROP TYPE IF EXISTS med_intake_status;
+DROP TYPE IF EXISTS gender_type;
+DROP TYPE IF EXISTS role_type;
