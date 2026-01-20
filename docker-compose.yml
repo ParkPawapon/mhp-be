@@ -35,11 +35,13 @@ services:
     container_name: stin-redis
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command: ["sh", "-c", "redis-server --appendonly yes $${REDIS_PASSWORD:+--requirepass \"$${REDIS_PASSWORD}\"}"]
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi"]
       interval: 5s
       timeout: 5s
       retries: 5

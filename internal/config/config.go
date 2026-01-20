@@ -55,10 +55,14 @@ type DBConfig struct {
 }
 
 type RedisConfig struct {
-	Host     string `env:"REDIS_HOST" envDefault:"localhost"`
-	Port     int    `env:"REDIS_PORT" envDefault:"6379"`
-	Password string `env:"REDIS_PASSWORD"`
-	DB       int    `env:"REDIS_DB" envDefault:"0"`
+	Host                  string `env:"REDIS_HOST" envDefault:"localhost"`
+	Port                  int    `env:"REDIS_PORT" envDefault:"6379"`
+	Password              string `env:"REDIS_PASSWORD"`
+	DB                    int    `env:"REDIS_DB" envDefault:"0"`
+	TLSEnabled            bool   `env:"REDIS_TLS_ENABLED" envDefault:"false"`
+	TLSInsecureSkipVerify bool   `env:"REDIS_TLS_INSECURE_SKIP_VERIFY" envDefault:"false"`
+	TLSServerName         string `env:"REDIS_TLS_SERVER_NAME"`
+	TLSCAFile             string `env:"REDIS_TLS_CA_FILE"`
 }
 
 type JWTConfig struct {
