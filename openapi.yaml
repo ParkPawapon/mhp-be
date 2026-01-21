@@ -1,0 +1,1565 @@
+openapi: 3.0.3
+info:
+  title: STIN Smart Care API
+  version: 1.0.0
+  description: |
+    Base path: /api/v1
+    Headers:
+      - Authorization: Bearer <token> (required for protected endpoints)
+      - X-Request-Id: <uuid> (optional; generated if absent)
+servers:
+  - url: http://localhost:8081
+    description: Local
+tags:
+  - name: Auth
+  - name: User
+  - name: Caregiver
+  - name: Medicines
+  - name: Intake
+  - name: Health
+  - name: Appointments
+  - name: Content
+  - name: Admin
+  - name: Audit
+  - name: System
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    pageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    pageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+    fromParam:
+      name: from
+      in: query
+      schema:
+        type: string
+        format: date
+    toParam:
+      name: to
+      in: query
+      schema:
+        type: string
+        format: date
+  schemas:
+    Meta:
+      type: object
+      required: [request_id]
+      properties:
+        request_id:
+          type: string
+          format: uuid
+    PaginationMeta:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          required: [page, page_size, total]
+          properties:
+            page:
+              type: integer
+            page_size:
+              type: integer
+            total:
+              type: integer
+    Envelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PaginationEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          nullable: true
+          type: object
+          additionalProperties: true
+    ErrorResponse:
+      type: object
+      required: [error, meta]
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RequestOTPRequest:
+      type: object
+      required: [phone, purpose]
+      properties:
+        phone:
+          type: string
+        purpose:
+          type: string
+    VerifyOTPRequest:
+      type: object
+      required: [phone, ref_code, otp_code, purpose]
+      properties:
+        phone:
+          type: string
+        ref_code:
+          type: string
+        otp_code:
+          type: string
+        purpose:
+          type: string
+    RegisterRequest:
+      type: object
+      required: [phone, ref_code, password, first_name, last_name]
+      properties:
+        phone:
+          type: string
+        ref_code:
+          type: string
+        password:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+    LoginRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+    ForgotPasswordRequestOTPRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+    ForgotPasswordConfirmRequest:
+      type: object
+      required: [phone, ref_code, otp_code, new_password]
+      properties:
+        phone:
+          type: string
+        ref_code:
+          type: string
+        otp_code:
+          type: string
+        new_password:
+          type: string
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    LogoutRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    UpdateProfileRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        hn:
+          type: string
+        citizen_id:
+          type: string
+        address_text:
+          type: string
+    DeviceTokenRequest:
+      type: object
+      required: [device_token, platform]
+      properties:
+        device_token:
+          type: string
+        platform:
+          type: string
+    CaregiverAssignmentRequest:
+      type: object
+      required: [patient_id, caregiver_id, relationship]
+      properties:
+        patient_id:
+          type: string
+          format: uuid
+        caregiver_id:
+          type: string
+          format: uuid
+        relationship:
+          type: string
+    CreatePatientMedicineRequest:
+      type: object
+      required: [dosage_amount]
+      properties:
+        medicine_master_id:
+          type: string
+          format: uuid
+        custom_name:
+          type: string
+        dosage_amount:
+          type: string
+    UpdatePatientMedicineRequest:
+      type: object
+      properties:
+        dosage_amount:
+          type: string
+    CreateMedicineScheduleRequest:
+      type: object
+      required: [time_slot]
+      properties:
+        time_slot:
+          type: string
+        meal_timing:
+          type: string
+    CreateIntakeRequest:
+      type: object
+      required: [schedule_id, target_date, status]
+      properties:
+        schedule_id:
+          type: string
+          format: uuid
+        target_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [TAKEN, MISSED, SKIPPED]
+    CreateHealthRecordRequest:
+      type: object
+      required: [record_date]
+      properties:
+        record_date:
+          type: string
+          format: date
+        systolic_bp:
+          type: integer
+    CreateDailyAssessmentRequest:
+      type: object
+      required: [log_date]
+      properties:
+        log_date:
+          type: string
+          format: date
+        exercise_minutes:
+          type: integer
+    CreateAppointmentRequest:
+      type: object
+      required: [title, appt_type, appt_datetime]
+      properties:
+        title:
+          type: string
+        appt_type:
+          type: string
+          enum: [HOSPITAL, HOME_VISIT]
+        appt_datetime:
+          type: string
+          format: date-time
+    UpdateAppointmentStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, COMPLETED, CANCELLED]
+    CreateNurseVisitNoteRequest:
+      type: object
+      required: [visit_details]
+      properties:
+        visit_details:
+          type: string
+    CreateHealthContentRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        body_content:
+          type: string
+    UpdateHealthContentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+    PublishHealthContentRequest:
+      type: object
+      required: [is_published]
+      properties:
+        is_published:
+          type: boolean
+    StaffLoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized:
+              value:
+                error:
+                  code: AUTH_UNAUTHORIZED
+                  message: unauthorized
+                  details: null
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+            validation_failed:
+              value:
+                error:
+                  code: VALIDATION_FAILED
+                  message: validation failed
+                  details:
+                    phone: required
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+paths:
+  /api/v1/auth/request-otp:
+    post:
+      tags: [Auth]
+      summary: Request OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestOTPRequest'
+            example:
+              phone: "0812345678"
+              purpose: "register"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  ref_code: "AB1234"
+                  expires_at: "2026-01-20T12:00:00Z"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verify OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+            example:
+              phone: "0812345678"
+              ref_code: "AB1234"
+              otp_code: "123456"
+              purpose: "register"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  verified: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              phone: "0812345678"
+              ref_code: "AB1234"
+              password: "***"
+              first_name: "A"
+              last_name: "B"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  user_id: "00000000-0000-0000-0000-000000000000"
+                  access_token: "..."
+                  refresh_token: "..."
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              phone: "0812345678"
+              password: "***"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  access_token: "..."
+                  refresh_token: "..."
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/forgot-password/request-otp:
+    post:
+      tags: [Auth]
+      summary: Request OTP for forgot password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequestOTPRequest'
+            example:
+              phone: "0812345678"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  ref_code: "AB1234"
+                  expires_at: "2026-01-20T12:00:00Z"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/forgot-password/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm forgot password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordConfirmRequest'
+            example:
+              phone: "0812345678"
+              ref_code: "AB1234"
+              otp_code: "123456"
+              new_password: "***"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  updated: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refresh_token: "..."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  access_token: "..."
+                  refresh_token: "..."
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+            example:
+              refresh_token: "..."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  revoked: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/me:
+    get:
+      tags: [User]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                  role: "PATIENT"
+                  profile:
+                    first_name: "A"
+                    last_name: "B"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/me/profile:
+    patch:
+      tags: [User]
+      summary: Update profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+            example:
+              first_name: "A"
+              last_name: "B"
+              hn: "HN001"
+              citizen_id: "1234567890123"
+              address_text: "..."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  updated: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/me/device-tokens:
+    post:
+      tags: [User]
+      summary: Save device token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTokenRequest'
+            example:
+              device_token: "..."
+              platform: "ios"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  saved: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/caregivers/assignments:
+    post:
+      tags: [Caregiver]
+      summary: Create caregiver assignment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaregiverAssignmentRequest'
+            example:
+              patient_id: "00000000-0000-0000-0000-000000000000"
+              caregiver_id: "00000000-0000-0000-0000-000000000000"
+              relationship: "family"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  assignment_id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      tags: [Caregiver]
+      summary: List caregiver assignments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: patient_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - caregiver_id: "00000000-0000-0000-0000-000000000000"
+                    relationship: "family"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/master:
+    get:
+      tags: [Medicines]
+      summary: List medicine master
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/pageSizeParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationEnvelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    trade_name: "..."
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+                  page: 1
+                  page_size: 20
+                  total: 100
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/patient:
+    post:
+      tags: [Medicines]
+      summary: Create patient medicine
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientMedicineRequest'
+            example:
+              medicine_master_id: "00000000-0000-0000-0000-000000000000"
+              dosage_amount: "1 tab"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      tags: [Medicines]
+      summary: List patient medicines
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    dosage_amount: "1 tab"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/patient/{id}:
+    patch:
+      tags: [Medicines]
+      summary: Update patient medicine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientMedicineRequest'
+            example:
+              dosage_amount: "2 tabs"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  updated: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Medicines]
+      summary: Delete patient medicine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  deleted: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/patient/{id}/schedules:
+    post:
+      tags: [Medicines]
+      summary: Create medicine schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMedicineScheduleRequest'
+            example:
+              time_slot: "08:00:00"
+              meal_timing: "before"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  schedule_id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/schedules/{id}:
+    delete:
+      tags: [Medicines]
+      summary: Delete medicine schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  deleted: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/intake:
+    post:
+      tags: [Intake]
+      summary: Create intake
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIntakeRequest'
+            example:
+              schedule_id: "00000000-0000-0000-0000-000000000000"
+              target_date: "2026-01-20"
+              status: "TAKEN"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/intake/history:
+    get:
+      tags: [Intake]
+      summary: List intake history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fromParam'
+        - $ref: '#/components/parameters/toParam'
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    status: "TAKEN"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/health/records:
+    post:
+      tags: [Health]
+      summary: Create health record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHealthRecordRequest'
+            example:
+              record_date: "2026-01-20"
+              systolic_bp: 120
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      tags: [Health]
+      summary: List health records
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fromParam'
+        - $ref: '#/components/parameters/toParam'
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - record_date: "2026-01-20"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/assessments/daily:
+    post:
+      tags: [Health]
+      summary: Create daily assessment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDailyAssessmentRequest'
+            example:
+              log_date: "2026-01-20"
+              exercise_minutes: 30
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      tags: [Health]
+      summary: List daily assessments
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fromParam'
+        - $ref: '#/components/parameters/toParam'
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - log_date: "2026-01-20"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/appointments:
+    get:
+      tags: [Appointments]
+      summary: List appointments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    status: "PENDING"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Appointments]
+      summary: Create appointment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+            example:
+              title: "Checkup"
+              appt_type: "HOSPITAL"
+              appt_datetime: "2026-01-20T09:00:00Z"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/appointments/{id}/status:
+    patch:
+      tags: [Appointments]
+      summary: Update appointment status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppointmentStatusRequest'
+            example:
+              status: "CONFIRMED"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  updated: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/appointments/{id}:
+    delete:
+      tags: [Appointments]
+      summary: Delete appointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  deleted: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/appointments/{id}/notes:
+    post:
+      tags: [Appointments]
+      summary: Create nurse visit note
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNurseVisitNoteRequest'
+            example:
+              visit_details: "..."
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/content/health:
+    get:
+      tags: [Content]
+      summary: List health content
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: published
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    title: "..."
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Content]
+      summary: Create health content
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHealthContentRequest'
+            example:
+              title: "..."
+              body_content: "..."
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/content/health/{id}:
+    patch:
+      tags: [Content]
+      summary: Update health content
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHealthContentRequest'
+            example:
+              title: "..."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  updated: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/content/health/{id}/publish:
+    post:
+      tags: [Content]
+      summary: Publish health content
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishHealthContentRequest'
+            example:
+              is_published: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  published: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/staff/login:
+    post:
+      tags: [Admin]
+      summary: Staff login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffLoginRequest'
+            example:
+              username: "admin"
+              password: "***"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  access_token: "..."
+                  refresh_token: "..."
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/admin/patients:
+    get:
+      tags: [Admin]
+      summary: List patients
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/pageSizeParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationEnvelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    first_name: "A"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+                  page: 1
+                  page_size: 20
+                  total: 100
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/admin/patients/{id}:
+    get:
+      tags: [Admin]
+      summary: Get patient detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                  first_name: "A"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/admin/adherence:
+    get:
+      tags: [Admin]
+      summary: List adherence
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: patient_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/fromParam'
+        - $ref: '#/components/parameters/toParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - target_date: "2026-01-20"
+                    status: "TAKEN"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/admin/audit-logs:
+    get:
+      tags: [Audit]
+      summary: List audit logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/pageSizeParam'
+        - $ref: '#/components/parameters/fromParam'
+        - $ref: '#/components/parameters/toParam'
+        - name: actor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationEnvelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    action_type: "LOGIN"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+                  page: 1
+                  page_size: 20
+                  total: 100
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /healthz:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  status: "ok"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+  /readyz:
+    get:
+      tags: [System]
+      summary: Readiness check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  database: "ok"
+                  redis: "ok"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+  /metrics:
+    get:
+      tags: [System]
+      summary: Prometheus metrics
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
