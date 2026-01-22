@@ -29,6 +29,33 @@ func (h *MedicineHandler) ListMaster(c *gin.Context) {
 	c.JSON(200, httpx.SuccessResponse{Data: items, Meta: meta})
 }
 
+func (h *MedicineHandler) ListCategories(c *gin.Context) {
+	resp, err := h.service.ListCategories(c.Request.Context())
+	if err != nil {
+		httpx.Fail(c, err)
+		return
+	}
+	httpx.OK(c, resp)
+}
+
+func (h *MedicineHandler) ListCategoryItems(c *gin.Context) {
+	id := c.Param("id")
+	resp, err := h.service.ListCategoryItems(c.Request.Context(), id)
+	if err != nil {
+		httpx.Fail(c, err)
+		return
+	}
+	httpx.OK(c, resp)
+}
+
+func (h *MedicineHandler) GetDosageOptions(c *gin.Context) {
+	httpx.OK(c, h.service.GetDosageOptions(c.Request.Context()))
+}
+
+func (h *MedicineHandler) GetMealTimingOptions(c *gin.Context) {
+	httpx.OK(c, h.service.GetMealTimingOptions(c.Request.Context()))
+}
+
 func (h *MedicineHandler) CreatePatientMedicine(c *gin.Context) {
 	actorID, _ := middleware.GetActorID(c)
 

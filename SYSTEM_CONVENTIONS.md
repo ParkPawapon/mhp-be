@@ -90,6 +90,11 @@ Sensitive data rules:
 ### updated_at Strategy
 - Use GORM `autoUpdateTime` with UTC `NowFunc` (application-layer updates).
 
+### Additional Tables & Enums
+- Tables: `medicine_categories`, `medicine_category_items`, `device_tokens`, `notification_templates`, `notification_events`, `user_preferences`, `support_chat_requests`.
+- Enum: `notification_status` = `PENDING`, `SENT`, `CANCELLED`, `FAILED`.
+- `meal_timing` is a controlled string; valid options are documented in `docs/API_CONTRACT.md`.
+
 ## Versioning Rules
 - Base API path `/api/v1`.
 - Backwards compatibility: no breaking changes in v1 without new v2 path.

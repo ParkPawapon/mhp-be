@@ -8,15 +8,15 @@ import (
 )
 
 type HealthRecord struct {
-	ID         uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID     uuid.UUID `gorm:"type:uuid;not null;index"`
-	RecordDate time.Time `gorm:"type:date;not null"`
-	TimePeriod string    `gorm:"size:20;not null"`
-	SystolicBP *int      `gorm:"type:int"`
-	DiastolicBP *int     `gorm:"type:int"`
-	PulseRate  *int      `gorm:"type:int"`
-	WeightKG   *float64  `gorm:"type:decimal(5,2)"`
-	CreatedAt  time.Time `gorm:"autoCreateTime"`
+	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null;index"`
+	RecordDate  time.Time `gorm:"type:date;not null"`
+	TimePeriod  string    `gorm:"size:20;not null"`
+	SystolicBP  *int      `gorm:"type:int"`
+	DiastolicBP *int      `gorm:"type:int"`
+	PulseRate   *int      `gorm:"type:int"`
+	WeightKG    *float64  `gorm:"type:decimal(5,2)"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
 }
 
 type DailyAssessment struct {

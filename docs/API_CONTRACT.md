@@ -128,6 +128,39 @@ Response:
 {"data":{"saved":true},"meta":{"request_id":"..."}}
 ```
 
+### PATCH /me/preferences
+Request:
+```json
+{"weekly_reminder_enabled":true}
+```
+Response:
+```json
+{"data":{"weekly_reminder_enabled":true},"meta":{"request_id":"..."}}
+```
+
+## Support
+### GET /support/emergency
+Response:
+```json
+{"data":{"hotline":"1669","display_name":"Emergency 1669"},"meta":{"request_id":"..."}}
+```
+
+### POST /support/chat/requests
+Request:
+```json
+{"message":"need help","category":"GENERAL","attachment_url":null}
+```
+Response:
+```json
+{"data":{"id":"uuid","status":"OPEN"},"meta":{"request_id":"..."}}
+```
+
+### GET /support/chat/requests
+Response:
+```json
+{"data":[{"id":"uuid","user_id":"uuid","message":"need help","category":"GENERAL","status":"OPEN","created_at":"2026-01-20T12:00:00Z"}],"meta":{"request_id":"...","page":1,"page_size":20,"total":1}}
+```
+
 ## Caregiver
 ### POST /caregivers/assignments
 Request:
@@ -146,6 +179,30 @@ Response:
 ```
 
 ## Medicines
+### GET /medicines/categories
+Response:
+```json
+{"data":[{"id":"uuid","name":"Hypertension","code":"HYPERTENSION","is_active":true}],"meta":{"request_id":"..."}}
+```
+
+### GET /medicines/categories/:id/items
+Response:
+```json
+{"data":[{"id":"uuid","category_id":"uuid","display_name":"Amlodipine 5 mg","default_dosage_text":"1","is_active":true}],"meta":{"request_id":"..."}}
+```
+
+### GET /medicines/dosage-options
+Response:
+```json
+{"data":["1/4","1/2","1","2"],"meta":{"request_id":"..."}}
+```
+
+### GET /medicines/meal-timing-options
+Response:
+```json
+{"data":["BEFORE_MEAL","AFTER_MEAL","AFTER_MEAL_IMMEDIATELY","BEFORE_BED","UNTIL_FINISHED","NO_MILK","OTHER"],"meta":{"request_id":"..."}}
+```
+
 ### GET /medicines/master
 Response:
 ```json
@@ -155,7 +212,7 @@ Response:
 ### POST /medicines/patient
 Request:
 ```json
-{"medicine_master_id":"uuid","dosage_amount":"1 tab"}
+{"medicine_master_id":"uuid","category_item_id":"uuid","custom_name":"Amlodipine","dosage_amount":"1"}
 ```
 Response:
 ```json
@@ -187,7 +244,7 @@ Response:
 ### POST /medicines/patient/:id/schedules
 Request:
 ```json
-{"time_slot":"08:00:00","meal_timing":"before"}
+{"time_slot":"08:00","meal_timing":"BEFORE_MEAL"}
 ```
 Response:
 ```json
@@ -198,6 +255,13 @@ Response:
 Response:
 ```json
 {"data":{"deleted":true},"meta":{"request_id":"..."}}
+```
+
+## Notifications
+### GET /notifications/upcoming?from=&to=
+Response:
+```json
+{"data":[{"id":"uuid","template_code":"MED_BEFORE_MEAL_5MIN","scheduled_at":"2026-01-20T11:55:00Z","status":"PENDING"}],"meta":{"request_id":"..."}}
 ```
 
 ## Intake
@@ -290,10 +354,23 @@ Request:
 ```
 Response:
 ```json
-{"data":{"id":"uuid"},"meta":{"request_id":"..."}}
+{"data":{"created":true},"meta":{"request_id":"..."}}
+```
+
+## Visits
+### GET /visits/history?user_id=
+Response:
+```json
+{"data":[{"appointment_id":"uuid","visit_note_id":"uuid","appt_datetime":"2026-01-20T12:00:00Z","title":"Home Visit","nurse_id":"uuid","visit_details":"...","created_at":"2026-01-20T12:30:00Z"}],"meta":{"request_id":"..."}}
 ```
 
 ## Health Content
+### GET /content/health/categories
+Response:
+```json
+{"data":["HYPERTENSION_KNOWLEDGE","HYPERTENSION_CONTROL","ABNORMAL_SYMPTOMS","CV_RISK_SCORE","FOOD_AND_MEDICINE","EXERCISE_AND_BMI","STRESS_MANAGEMENT","SLEEP"],"meta":{"request_id":"..."}}
+```
+
 ### GET /content/health?published=true
 Response:
 ```json
@@ -395,11 +472,16 @@ Response: Prometheus metrics text format.
 | --- | --- | --- | --- | --- |
 | Auth | Yes | Yes | Yes | Yes |
 | /me | Self | Self | Self | Self |
+| /me/preferences | Self | Self | Self | Self |
 | Caregiver assignments | No | No | Yes | Yes |
 | Medicines/Intake | Self | Read assigned | Yes | Yes |
 | Health records/assessments | Self | Read assigned | Yes | Yes |
 | Appointments | Self | Read assigned | Yes | Yes |
+| Visits history | Self | Read assigned | Yes | Yes |
 | Health content | Read published | Read published | Create/Update | Full |
+| Support emergency | Yes | Yes | Yes | Yes |
+| Support chat | Create | No | List | List |
+| Notifications | Self | Self | Self | Self |
 | Admin endpoints | No | No | No | Yes |
 | Audit logs | No | No | No | Yes |
 

@@ -18,7 +18,10 @@ tags:
   - name: Intake
   - name: Health
   - name: Appointments
+  - name: Visits
   - name: Content
+  - name: Support
+  - name: Notifications
   - name: Admin
   - name: Audit
   - name: System
@@ -198,7 +201,27 @@ components:
           type: string
         citizen_id:
           type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [MALE, FEMALE, OTHER]
+        blood_type:
+          type: string
         address_text:
+          type: string
+        gps_lat:
+          type: number
+          format: double
+        gps_long:
+          type: number
+          format: double
+        emergency_contact_name:
+          type: string
+        emergency_contact_phone:
+          type: string
+        avatar_url:
           type: string
     DeviceTokenRequest:
       type: object
@@ -208,6 +231,12 @@ components:
           type: string
         platform:
           type: string
+    UpdatePreferencesRequest:
+      type: object
+      required: [weekly_reminder_enabled]
+      properties:
+        weekly_reminder_enabled:
+          type: boolean
     CaregiverAssignmentRequest:
       type: object
       required: [patient_id, caregiver_id, relationship]
@@ -222,20 +251,38 @@ components:
           type: string
     CreatePatientMedicineRequest:
       type: object
-      required: [dosage_amount]
       properties:
         medicine_master_id:
+          type: string
+          format: uuid
+        category_item_id:
           type: string
           format: uuid
         custom_name:
           type: string
         dosage_amount:
           type: string
+        instruction:
+          type: string
+        indication:
+          type: string
+        my_drug_image_url:
+          type: string
     UpdatePatientMedicineRequest:
       type: object
       properties:
+        custom_name:
+          type: string
         dosage_amount:
           type: string
+        instruction:
+          type: string
+        indication:
+          type: string
+        my_drug_image_url:
+          type: string
+        is_active:
+          type: boolean
     CreateMedicineScheduleRequest:
       type: object
       required: [time_slot]
@@ -244,9 +291,10 @@ components:
           type: string
         meal_timing:
           type: string
+          enum: [BEFORE_MEAL, AFTER_MEAL, AFTER_MEAL_IMMEDIATELY, BEFORE_BED, UNTIL_FINISHED, NO_MILK, OTHER]
     CreateIntakeRequest:
       type: object
-      required: [schedule_id, target_date, status]
+      required: [target_date, status]
       properties:
         schedule_id:
           type: string
@@ -257,6 +305,8 @@ components:
         status:
           type: string
           enum: [TAKEN, MISSED, SKIPPED]
+        skip_reason:
+          type: string
     CreateHealthRecordRequest:
       type: object
       required: [record_date]
@@ -287,6 +337,10 @@ components:
         appt_datetime:
           type: string
           format: date-time
+        location_name:
+          type: string
+        slip_image_url:
+          type: string
     UpdateAppointmentStatusRequest:
       type: object
       required: [status]
@@ -300,6 +354,11 @@ components:
       properties:
         visit_details:
           type: string
+        vital_signs_summary:
+          type: object
+          additionalProperties: true
+        next_action_plan:
+          type: string
     CreateHealthContentRequest:
       type: object
       required: [title]
@@ -308,10 +367,24 @@ components:
           type: string
         body_content:
           type: string
+        thumbnail_url:
+          type: string
+        external_video_url:
+          type: string
+        category:
+          type: string
     UpdateHealthContentRequest:
       type: object
       properties:
         title:
+          type: string
+        body_content:
+          type: string
+        thumbnail_url:
+          type: string
+        external_video_url:
+          type: string
+        category:
           type: string
     PublishHealthContentRequest:
       type: object
@@ -319,6 +392,18 @@ components:
       properties:
         is_published:
           type: boolean
+    SupportChatRequestCreateRequest:
+      type: object
+      required: [message, category]
+      properties:
+        message:
+          type: string
+        category:
+          type: string
+          enum: [GENERAL, MEDICINE, APPOINTMENT, TECH]
+        attachment_url:
+          type: string
+          nullable: true
     StaffLoginRequest:
       type: object
       required: [username, password]
@@ -664,6 +749,34 @@ paths:
                   request_id: "00000000-0000-0000-0000-000000000000"
         default:
           $ref: '#/components/responses/ErrorResponse'
+  /api/v1/me/preferences:
+    patch:
+      tags: [User]
+      summary: Update preferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+            example:
+              weekly_reminder_enabled: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  weekly_reminder_enabled: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
   /api/v1/caregivers/assignments:
     post:
       tags: [Caregiver]
@@ -720,6 +833,178 @@ paths:
                   request_id: "00000000-0000-0000-0000-000000000000"
         default:
           $ref: '#/components/responses/ErrorResponse'
+  /api/v1/support/emergency:
+    get:
+      tags: [Support]
+      summary: Get emergency hotline
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  hotline: "1669"
+                  display_name: "Emergency 1669"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/support/chat/requests:
+    post:
+      tags: [Support]
+      summary: Create support chat request
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportChatRequestCreateRequest'
+            example:
+              message: "need help"
+              category: "GENERAL"
+              attachment_url: null
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  id: "00000000-0000-0000-0000-000000000000"
+                  status: "OPEN"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      tags: [Support]
+      summary: List support chat requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/pageSizeParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationEnvelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    user_id: "00000000-0000-0000-0000-000000000000"
+                    message: "need help"
+                    category: "GENERAL"
+                    status: "OPEN"
+                    created_at: "2026-01-20T12:00:00Z"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+                  page: 1
+                  page_size: 20
+                  total: 1
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/categories:
+    get:
+      tags: [Medicines]
+      summary: List medicine categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    name: "Hypertension"
+                    code: "HYPERTENSION"
+                    is_active: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/categories/{id}/items:
+    get:
+      tags: [Medicines]
+      summary: List medicine category items
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    category_id: "00000000-0000-0000-0000-000000000000"
+                    display_name: "Amlodipine 5 mg"
+                    default_dosage_text: "1"
+                    is_active: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/dosage-options:
+    get:
+      tags: [Medicines]
+      summary: List dosage options
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data: ["1/4", "1/2", "1", "2"]
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/medicines/meal-timing-options:
+    get:
+      tags: [Medicines]
+      summary: List meal timing options
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data: ["BEFORE_MEAL", "AFTER_MEAL", "AFTER_MEAL_IMMEDIATELY", "BEFORE_BED", "UNTIL_FINISHED", "NO_MILK", "OTHER"]
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
   /api/v1/medicines/master:
     get:
       tags: [Medicines]
@@ -761,7 +1046,9 @@ paths:
               $ref: '#/components/schemas/CreatePatientMedicineRequest'
             example:
               medicine_master_id: "00000000-0000-0000-0000-000000000000"
-              dosage_amount: "1 tab"
+              category_item_id: "00000000-0000-0000-0000-000000000000"
+              custom_name: "Amlodipine"
+              dosage_amount: "1"
       responses:
         '201':
           description: Created
@@ -771,7 +1058,7 @@ paths:
                 $ref: '#/components/schemas/Envelope'
               example:
                 data:
-                  id: "00000000-0000-0000-0000-000000000000"
+                  created: true
                 meta:
                   request_id: "00000000-0000-0000-0000-000000000000"
         default:
@@ -792,6 +1079,38 @@ paths:
                 data:
                   - id: "00000000-0000-0000-0000-000000000000"
                     dosage_amount: "1 tab"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/visits/history:
+    get:
+      tags: [Visits]
+      summary: List visit history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - appointment_id: "00000000-0000-0000-0000-000000000000"
+                    visit_note_id: "00000000-0000-0000-0000-000000000000"
+                    appt_datetime: "2026-01-20T12:00:00Z"
+                    title: "Home Visit"
+                    nurse_id: "00000000-0000-0000-0000-000000000000"
+                    visit_details: "..."
+                    created_at: "2026-01-20T12:30:00Z"
                 meta:
                   request_id: "00000000-0000-0000-0000-000000000000"
         default:
@@ -877,8 +1196,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateMedicineScheduleRequest'
             example:
-              time_slot: "08:00:00"
-              meal_timing: "before"
+              time_slot: "08:00"
+              meal_timing: "BEFORE_MEAL"
       responses:
         '201':
           description: Created
@@ -916,6 +1235,40 @@ paths:
               example:
                 data:
                   deleted: true
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/notifications/upcoming:
+    get:
+      tags: [Notifications]
+      summary: List upcoming notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data:
+                  - id: "00000000-0000-0000-0000-000000000000"
+                    template_code: "MED_BEFORE_MEAL_5MIN"
+                    scheduled_at: "2026-01-20T11:55:00Z"
+                    status: "PENDING"
                 meta:
                   request_id: "00000000-0000-0000-0000-000000000000"
         default:
@@ -1240,6 +1593,25 @@ paths:
               example:
                 data:
                   id: "00000000-0000-0000-0000-000000000000"
+                meta:
+                  request_id: "00000000-0000-0000-0000-000000000000"
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/content/health/categories:
+    get:
+      tags: [Content]
+      summary: List health content categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+              example:
+                data: ["HYPERTENSION_KNOWLEDGE", "HYPERTENSION_CONTROL", "ABNORMAL_SYMPTOMS", "CV_RISK_SCORE", "FOOD_AND_MEDICINE", "EXERCISE_AND_BMI", "STRESS_MANAGEMENT", "SLEEP"]
                 meta:
                   request_id: "00000000-0000-0000-0000-000000000000"
         default:

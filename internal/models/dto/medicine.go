@@ -12,8 +12,9 @@ type MedicineMasterResponse struct {
 
 type CreatePatientMedicineRequest struct {
 	MedicineMasterID *string `json:"medicine_master_id"`
+	CategoryItemID   *string `json:"category_item_id"`
 	CustomName       *string `json:"custom_name"`
-	DosageAmount     string  `json:"dosage_amount" validate:"required"`
+	DosageAmount     string  `json:"dosage_amount"`
 	Instruction      *string `json:"instruction"`
 	Indication       *string `json:"indication"`
 	MyDrugImageURL   *string `json:"my_drug_image_url"`
@@ -23,6 +24,7 @@ type PatientMedicineResponse struct {
 	ID               string    `json:"id"`
 	UserID           string    `json:"user_id"`
 	MedicineMasterID *string   `json:"medicine_master_id,omitempty"`
+	CategoryItemID   *string   `json:"category_item_id,omitempty"`
 	CustomName       *string   `json:"custom_name,omitempty"`
 	DosageAmount     string    `json:"dosage_amount"`
 	Instruction      *string   `json:"instruction,omitempty"`

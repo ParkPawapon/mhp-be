@@ -21,6 +21,7 @@ type Config struct {
 	RateLimit     RateLimitConfig
 	CORS          CORSConfig
 	Observability ObservabilityConfig
+	Notifications NotificationConfig
 }
 
 type AppConfig struct {
@@ -110,6 +111,15 @@ type CORSConfig struct {
 type ObservabilityConfig struct {
 	OtelEnabled bool   `env:"OTEL_ENABLED" envDefault:"false"`
 	ServiceName string `env:"OTEL_SERVICE_NAME" envDefault:"stin-smart-care-be"`
+}
+
+type NotificationConfig struct {
+	ScheduleDays         int           `env:"NOTIFICATION_SCHEDULE_DAYS" envDefault:"7"`
+	JobInterval          time.Duration `env:"NOTIFICATION_JOB_INTERVAL" envDefault:"1m"`
+	JobBatchSize         int           `env:"NOTIFICATION_JOB_BATCH_SIZE" envDefault:"100"`
+	WeeklyReminderHour   int           `env:"NOTIFICATION_WEEKLY_HOUR" envDefault:"19"`
+	WeeklyReminderMinute int           `env:"NOTIFICATION_WEEKLY_MINUTE" envDefault:"0"`
+	Timezone             string        `env:"NOTIFICATION_TIMEZONE" envDefault:"Asia/Bangkok"`
 }
 
 func Load() (Config, error) {

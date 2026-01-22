@@ -75,3 +75,7 @@ func (h *ContentHandler) PublishHealthContent(c *gin.Context) {
 	}
 	httpx.OK(c, gin.H{"published": req.IsPublished})
 }
+
+func (h *ContentHandler) ListHealthCategories(c *gin.Context) {
+	httpx.OK(c, h.service.ListHealthCategories(c.Request.Context()))
+}

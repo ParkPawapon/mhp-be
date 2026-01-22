@@ -10,7 +10,7 @@ import (
 )
 
 type IntakeHandler struct {
-	service   services.IntakeService
+	service    services.IntakeService
 	caregivers services.CaregiverService
 }
 

@@ -41,3 +41,8 @@
 
 ## Transactions
 - Transactions only in services using repository interfaces that accept `*gorm.DB` when needed.
+
+## Background Jobs
+- Jobs live in `internal/jobs` and call services (no direct handler logic).
+- Use `NotificationService` for scheduling/sending; job interval is configured via env.
+- Jobs must be idempotent and concurrency-safe (e.g., row locking with `FOR UPDATE SKIP LOCKED`).

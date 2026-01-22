@@ -10,13 +10,13 @@ const (
 	AuthTokenInvalid       = "AUTH_TOKEN_INVALID"
 	AuthTokenExpired       = "AUTH_TOKEN_EXPIRED"
 
-	UserNotFound    = "USER_NOT_FOUND"
-	UserConflict    = "USER_CONFLICT"
-	UserInvalid     = "USER_INVALID"
-	ProfileInvalid  = "USER_PROFILE_INVALID"
+	UserNotFound   = "USER_NOT_FOUND"
+	UserConflict   = "USER_CONFLICT"
+	UserInvalid    = "USER_INVALID"
+	ProfileInvalid = "USER_PROFILE_INVALID"
 
-	MedInvalid   = "MED_INVALID"
-	MedNotFound  = "MED_NOT_FOUND"
+	MedInvalid  = "MED_INVALID"
+	MedNotFound = "MED_NOT_FOUND"
 
 	ApptInvalid  = "APPT_INVALID"
 	ApptNotFound = "APPT_NOT_FOUND"
@@ -33,7 +33,7 @@ const (
 
 	ValidationFailed = "VALIDATION_FAILED"
 
-	InternalError       = "INTERNAL_ERROR"
-	InternalUnavailable = "INTERNAL_UNAVAILABLE"
+	InternalError          = "INTERNAL_ERROR"
+	InternalUnavailable    = "INTERNAL_UNAVAILABLE"
 	InternalNotImplemented = "INTERNAL_NOT_IMPLEMENTED"
 )

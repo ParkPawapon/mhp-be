@@ -7,7 +7,7 @@ import (
 )
 
 type AuditLog struct {
-	ID           uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID           uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	ActorID      *uuid.UUID `gorm:"type:uuid"`
 	TargetUserID *uuid.UUID `gorm:"type:uuid"`
 	ActionType   string     `gorm:"size:50;not null"`

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -10,12 +11,22 @@ import (
 var Validate = validator.New()
 
 func init() {
+	phoneRegex := regexp.MustCompile(`^\+?[0-9]{9,15}$`)
+
 	Validate.RegisterTagNameFunc(func(field reflect.StructField) string {
 		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
 		if name == "-" || name == "" {
 			return field.Name
 		}
 		return name
+	})
+
+	_ = Validate.RegisterValidation("phone", func(fl validator.FieldLevel) bool {
+		value := fl.Field().String()
+		if value == "" {
+			return true
+		}
+		return phoneRegex.MatchString(value)
 	})
 }
 
@@ -37,6 +48,8 @@ func ValidationErrors(err error) map[string]string {
 			out[field] = "maximum"
 		case "email":
 			out[field] = "invalid email"
+		case "phone":
+			out[field] = "invalid phone"
 		default:
 			out[field] = "invalid"
 		}

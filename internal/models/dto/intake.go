@@ -7,10 +7,10 @@ import (
 )
 
 type CreateIntakeRequest struct {
-	ScheduleID *string                  `json:"schedule_id"`
-	TargetDate string                   `json:"target_date" validate:"required"`
+	ScheduleID *string                   `json:"schedule_id"`
+	TargetDate string                    `json:"target_date" validate:"required"`
 	Status     constants.MedIntakeStatus `json:"status" validate:"required"`
-	SkipReason *string                  `json:"skip_reason"`
+	SkipReason *string                   `json:"skip_reason"`
 }
 
 type IntakeHistoryResponse struct {

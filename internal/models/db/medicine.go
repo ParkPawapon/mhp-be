@@ -24,6 +24,7 @@ type PatientMedicine struct {
 	ID               uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	UserID           uuid.UUID      `gorm:"type:uuid;not null;index"`
 	MedicineMasterID *uuid.UUID     `gorm:"type:uuid"`
+	CategoryItemID   *uuid.UUID     `gorm:"type:uuid"`
 	CustomName       *string        `gorm:"size:255"`
 	DosageAmount     string         `gorm:"size:100;not null"`
 	Instruction      *string        `gorm:"type:text"`

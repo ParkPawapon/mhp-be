@@ -24,18 +24,18 @@ type User struct {
 }
 
 type UserProfile struct {
-	UserID                uuid.UUID           `gorm:"type:uuid;primaryKey"`
-	HN                    *string             `gorm:"size:20;uniqueIndex"`
-	CitizenID             *string             `gorm:"size:13;uniqueIndex"`
-	FirstName             string              `gorm:"size:100;not null"`
-	LastName              string              `gorm:"size:100;not null"`
-	DateOfBirth           time.Time           `gorm:"type:date;not null"`
+	UserID                uuid.UUID             `gorm:"type:uuid;primaryKey"`
+	HN                    *string               `gorm:"size:20;uniqueIndex"`
+	CitizenID             *string               `gorm:"size:13;uniqueIndex"`
+	FirstName             string                `gorm:"size:100;not null"`
+	LastName              string                `gorm:"size:100;not null"`
+	DateOfBirth           time.Time             `gorm:"type:date;not null"`
 	Gender                *constants.GenderType `gorm:"type:gender_type"`
-	BloodType             *string             `gorm:"size:5"`
-	AddressText           *string             `gorm:"type:text"`
-	GPSLat                *float64            `gorm:"type:decimal(10,8)"`
-	GPSLong               *float64            `gorm:"type:decimal(11,8)"`
-	EmergencyContactName  *string             `gorm:"size:100"`
-	EmergencyContactPhone *string             `gorm:"size:15"`
-	AvatarURL             *string             `gorm:"type:text"`
+	BloodType             *string               `gorm:"size:5"`
+	AddressText           *string               `gorm:"type:text"`
+	GPSLat                *float64              `gorm:"type:decimal(10,8)"`
+	GPSLong               *float64              `gorm:"type:decimal(11,8)"`
+	EmergencyContactName  *string               `gorm:"size:100"`
+	EmergencyContactPhone *string               `gorm:"size:15"`
+	AvatarURL             *string               `gorm:"type:text"`
 }

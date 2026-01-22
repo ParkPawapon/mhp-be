@@ -1,0 +1,3 @@
+DROP INDEX IF EXISTS idx_support_chat_requests_created_at;
+DROP INDEX IF EXISTS idx_notification_events_user_template_status;
+DROP INDEX IF EXISTS idx_notification_events_status_scheduled_at;

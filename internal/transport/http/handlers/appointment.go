@@ -86,3 +86,19 @@ func (h *AppointmentHandler) CreateNurseVisitNote(c *gin.Context) {
 	}
 	httpx.Created(c, gin.H{"created": true})
 }
+
+func (h *AppointmentHandler) ListVisitHistory(c *gin.Context) {
+	userID := c.Query("user_id")
+	resolvedUserID, err := authorizePatientAccess(c, h.caregivers, userID)
+	if err != nil {
+		httpx.Fail(c, err)
+		return
+	}
+
+	resp, err := h.service.ListVisitHistory(c.Request.Context(), resolvedUserID)
+	if err != nil {
+		httpx.Fail(c, err)
+		return
+	}
+	httpx.OK(c, resp)
+}

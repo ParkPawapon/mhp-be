@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/ParkPawapon/mhp-be/internal/constants"
 	"github.com/ParkPawapon/mhp-be/internal/domain"
@@ -18,16 +18,19 @@ type UserService interface {
 	GetMe(ctx context.Context, actorID uuid.UUID, role constants.Role) (dto.MeResponse, error)
 	UpdateProfile(ctx context.Context, actorID uuid.UUID, req dto.UpdateProfileRequest) error
 	SaveDeviceToken(ctx context.Context, actorID uuid.UUID, req dto.DeviceTokenRequest) error
+	UpdatePreferences(ctx context.Context, actorID uuid.UUID, req dto.UpdatePreferencesRequest) (dto.PreferencesResponse, error)
 }
 
 type userService struct {
 	userRepo    repositories.UserRepository
 	profileRepo repositories.ProfileRepository
-	redis       *redis.Client
+	deviceRepo  repositories.DeviceTokenRepository
+	prefRepo    repositories.PreferenceRepository
+	notify      NotificationService
 }
 
-func NewUserService(userRepo repositories.UserRepository, profileRepo repositories.ProfileRepository, redisClient *redis.Client) UserService {
-	return &userService{userRepo: userRepo, profileRepo: profileRepo, redis: redisClient}
+func NewUserService(userRepo repositories.UserRepository, profileRepo repositories.ProfileRepository, deviceRepo repositories.DeviceTokenRepository, prefRepo repositories.PreferenceRepository, notify NotificationService) UserService {
+	return &userService{userRepo: userRepo, profileRepo: profileRepo, deviceRepo: deviceRepo, prefRepo: prefRepo, notify: notify}
 }
 
 func (s *userService) GetMe(ctx context.Context, actorID uuid.UUID, role constants.Role) (dto.MeResponse, error) {
@@ -145,9 +148,43 @@ func (s *userService) UpdateProfile(ctx context.Context, actorID uuid.UUID, req 
 }
 
 func (s *userService) SaveDeviceToken(ctx context.Context, actorID uuid.UUID, req dto.DeviceTokenRequest) error {
-	key := "device:token:" + actorID.String() + ":" + req.Platform
-	if err := s.redis.Set(ctx, key, req.DeviceToken, 0).Err(); err != nil {
-		return domain.WrapError(constants.InternalError, "save device token failed", err)
+	platform := strings.ToLower(strings.TrimSpace(req.Platform))
+	if platform == "" {
+		return domain.NewError(constants.ValidationFailed, "platform required")
 	}
-	return nil
+	if strings.TrimSpace(req.DeviceToken) == "" {
+		return domain.NewError(constants.ValidationFailed, "device_token required")
+	}
+
+	if s.deviceRepo == nil {
+		return domain.NewError(constants.InternalError, "device token repository not configured")
+	}
+
+	record := &db.DeviceToken{
+		UserID:   actorID,
+		Platform: platform,
+		Token:    req.DeviceToken,
+		IsActive: true,
+	}
+	return s.deviceRepo.Save(ctx, record)
+}
+
+func (s *userService) UpdatePreferences(ctx context.Context, actorID uuid.UUID, req dto.UpdatePreferencesRequest) (dto.PreferencesResponse, error) {
+	if req.WeeklyReminderEnabled == nil {
+		return dto.PreferencesResponse{}, domain.NewError(constants.ValidationFailed, "weekly_reminder_enabled required")
+	}
+	if s.prefRepo == nil {
+		return dto.PreferencesResponse{}, domain.NewError(constants.InternalError, "preferences repository not configured")
+	}
+
+	pref := &db.UserPreference{UserID: actorID, WeeklyReminderEnabled: *req.WeeklyReminderEnabled}
+	if err := s.prefRepo.Upsert(ctx, pref); err != nil {
+		return dto.PreferencesResponse{}, err
+	}
+
+	if s.notify != nil && !*req.WeeklyReminderEnabled {
+		_ = s.notify.CancelWeeklyReminders(ctx, actorID)
+	}
+
+	return dto.PreferencesResponse{WeeklyReminderEnabled: pref.WeeklyReminderEnabled}, nil
 }

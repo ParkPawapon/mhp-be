@@ -60,3 +60,20 @@ func (h *UserHandler) SaveDeviceToken(c *gin.Context) {
 	}
 	httpx.OK(c, gin.H{"saved": true})
 }
+
+func (h *UserHandler) UpdatePreferences(c *gin.Context) {
+	actorID, _ := middleware.GetActorID(c)
+
+	var req dto.UpdatePreferencesRequest
+	if err := bindAndValidateJSON(c, &req); err != nil {
+		httpx.Fail(c, err)
+		return
+	}
+
+	resp, err := h.users.UpdatePreferences(c.Request.Context(), actorID, req)
+	if err != nil {
+		httpx.Fail(c, err)
+		return
+	}
+	httpx.OK(c, resp)
+}

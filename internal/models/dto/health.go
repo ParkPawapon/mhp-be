@@ -12,14 +12,14 @@ type CreateHealthRecordRequest struct {
 }
 
 type HealthRecordResponse struct {
-	ID         string    `json:"id"`
-	RecordDate string    `json:"record_date"`
-	TimePeriod string    `json:"time_period"`
-	SystolicBP *int      `json:"systolic_bp,omitempty"`
-	DiastolicBP *int     `json:"diastolic_bp,omitempty"`
-	PulseRate  *int      `json:"pulse_rate,omitempty"`
-	WeightKG   *float64  `json:"weight_kg,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	RecordDate  string    `json:"record_date"`
+	TimePeriod  string    `json:"time_period"`
+	SystolicBP  *int      `json:"systolic_bp,omitempty"`
+	DiastolicBP *int      `json:"diastolic_bp,omitempty"`
+	PulseRate   *int      `json:"pulse_rate,omitempty"`
+	WeightKG    *float64  `json:"weight_kg,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type CreateDailyAssessmentRequest struct {

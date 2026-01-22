@@ -1,8 +1,6 @@
 package http
 
 import (
-	"net/http"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -15,26 +13,30 @@ import (
 
 	"github.com/ParkPawapon/mhp-be/internal/config"
 	"github.com/ParkPawapon/mhp-be/internal/constants"
+	"github.com/ParkPawapon/mhp-be/internal/domain"
 	"github.com/ParkPawapon/mhp-be/internal/middleware"
-	"github.com/ParkPawapon/mhp-be/internal/transport/http/handlers"
 	"github.com/ParkPawapon/mhp-be/internal/services"
+	"github.com/ParkPawapon/mhp-be/internal/transport/http/handlers"
+	"github.com/ParkPawapon/mhp-be/internal/transport/httpx"
 )
 
 type Dependencies struct {
-	Config         config.Config
-	Logger         *zap.Logger
-	DB             *gorm.DB
-	Redis          *redis.Client
-	AuthService    services.AuthService
-	UserService    services.UserService
-	CaregiverService services.CaregiverService
-	MedicineService  services.MedicineService
-	IntakeService    services.IntakeService
-	HealthService    services.HealthService
-	AppointmentService services.AppointmentService
-	ContentService   services.ContentService
-	AdminService     services.AdminService
-	AuditService     services.AuditService
+	Config              config.Config
+	Logger              *zap.Logger
+	DB                  *gorm.DB
+	Redis               *redis.Client
+	AuthService         services.AuthService
+	UserService         services.UserService
+	CaregiverService    services.CaregiverService
+	MedicineService     services.MedicineService
+	IntakeService       services.IntakeService
+	HealthService       services.HealthService
+	AppointmentService  services.AppointmentService
+	ContentService      services.ContentService
+	NotificationService services.NotificationService
+	SupportService      services.SupportService
+	AdminService        services.AdminService
+	AuditService        services.AuditService
 }
 
 func NewRouter(deps Dependencies) *gin.Engine {
@@ -62,6 +64,8 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	healthRecordHandler := handlers.NewHealthRecordsHandler(deps.HealthService, deps.CaregiverService)
 	appointmentHandler := handlers.NewAppointmentHandler(deps.AppointmentService, deps.CaregiverService)
 	contentHandler := handlers.NewContentHandler(deps.ContentService)
+	notificationHandler := handlers.NewNotificationHandler(deps.NotificationService)
+	supportHandler := handlers.NewSupportHandler(deps.SupportService)
 	adminHandler := handlers.NewAdminHandler(deps.AdminService)
 	auditHandler := handlers.NewAuditHandler(deps.AuditService)
 
@@ -94,6 +98,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		{
 			me.GET("", userHandler.Me)
 			me.PATCH("/profile", userHandler.UpdateProfile)
+			me.PATCH("/preferences", userHandler.UpdatePreferences)
 			me.POST("/device-tokens", userHandler.SaveDeviceToken)
 		}
 
@@ -107,6 +112,10 @@ func NewRouter(deps Dependencies) *gin.Engine {
 
 		medicines := api.Group("/medicines")
 		medicines.Use(middleware.RequireAuth(deps.Config.JWT))
+		medicines.GET("/categories", medicineHandler.ListCategories)
+		medicines.GET("/categories/:id/items", medicineHandler.ListCategoryItems)
+		medicines.GET("/dosage-options", medicineHandler.GetDosageOptions)
+		medicines.GET("/meal-timing-options", medicineHandler.GetMealTimingOptions)
 		medicines.GET("/master", medicineHandler.ListMaster)
 		medicines.Use(middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin))
 		{
@@ -118,45 +127,67 @@ func NewRouter(deps Dependencies) *gin.Engine {
 			medicines.DELETE("/schedules/:id", medicineHandler.DeleteSchedule)
 		}
 
-	intake := api.Group("/intake")
-	intake.Use(middleware.RequireAuth(deps.Config.JWT))
-	{
-		intake.POST("", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), intakeHandler.CreateIntake)
-		intake.GET("/history", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), intakeHandler.ListHistory)
-	}
+		intake := api.Group("/intake")
+		intake.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			intake.POST("", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), intakeHandler.CreateIntake)
+			intake.GET("/history", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), intakeHandler.ListHistory)
+		}
 
-	health := api.Group("/health")
-	health.Use(middleware.RequireAuth(deps.Config.JWT))
-	{
-		health.POST("/records", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.CreateHealthRecord)
-		health.GET("/records", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.ListHealthRecords)
-	}
+		health := api.Group("/health")
+		health.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			health.POST("/records", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.CreateHealthRecord)
+			health.GET("/records", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.ListHealthRecords)
+		}
 
-	assessments := api.Group("/assessments")
-	assessments.Use(middleware.RequireAuth(deps.Config.JWT))
-	{
-		assessments.POST("/daily", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.CreateDailyAssessment)
-		assessments.GET("/daily", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.ListDailyAssessments)
-	}
+		assessments := api.Group("/assessments")
+		assessments.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			assessments.POST("/daily", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.CreateDailyAssessment)
+			assessments.GET("/daily", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), healthRecordHandler.ListDailyAssessments)
+		}
 
-	appointments := api.Group("/appointments")
-	appointments.Use(middleware.RequireAuth(deps.Config.JWT))
-	{
-		appointments.GET("", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), appointmentHandler.ListAppointments)
-		appointments.POST("", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), appointmentHandler.CreateAppointment)
-		appointments.PATCH("/:id/status", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), appointmentHandler.UpdateStatus)
-		appointments.DELETE("/:id", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), appointmentHandler.DeleteAppointment)
-		appointments.POST("/:id/notes", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), appointmentHandler.CreateNurseVisitNote)
-	}
+		appointments := api.Group("/appointments")
+		appointments.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			appointments.GET("", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), appointmentHandler.ListAppointments)
+			appointments.POST("", middleware.RequireRoles(constants.RolePatient, constants.RoleNurse, constants.RoleAdmin), appointmentHandler.CreateAppointment)
+			appointments.PATCH("/:id/status", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), appointmentHandler.UpdateStatus)
+			appointments.DELETE("/:id", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), appointmentHandler.DeleteAppointment)
+			appointments.POST("/:id/notes", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), appointmentHandler.CreateNurseVisitNote)
+		}
 
-	content := api.Group("/content")
-	content.Use(middleware.RequireAuth(deps.Config.JWT))
-	{
-		content.GET("/health", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), contentHandler.ListHealthContent)
-		content.POST("/health", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), contentHandler.CreateHealthContent)
-		content.PATCH("/health/:id", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), contentHandler.UpdateHealthContent)
-		content.POST("/health/:id/publish", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), contentHandler.PublishHealthContent)
-	}
+		visits := api.Group("/visits")
+		visits.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			visits.GET("/history", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), appointmentHandler.ListVisitHistory)
+		}
+
+		content := api.Group("/content")
+		content.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			content.GET("/health/categories", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), contentHandler.ListHealthCategories)
+			content.GET("/health", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), contentHandler.ListHealthContent)
+			content.POST("/health", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), contentHandler.CreateHealthContent)
+			content.PATCH("/health/:id", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), contentHandler.UpdateHealthContent)
+			content.POST("/health/:id/publish", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), contentHandler.PublishHealthContent)
+		}
+
+		notifications := api.Group("/notifications")
+		notifications.Use(middleware.RequireAuth(deps.Config.JWT))
+		{
+			notifications.GET("/upcoming", middleware.RequireRoles(constants.RolePatient, constants.RoleCaregiver, constants.RoleNurse, constants.RoleAdmin), notificationHandler.ListUpcoming)
+		}
+
+		support := api.Group("/support")
+		{
+			support.GET("/emergency", supportHandler.EmergencyInfo)
+			chat := support.Group("/chat")
+			chat.Use(middleware.RequireAuth(deps.Config.JWT))
+			chat.POST("/requests", middleware.RequireRoles(constants.RolePatient), supportHandler.CreateChatRequest)
+			chat.GET("/requests", middleware.RequireRoles(constants.RoleNurse, constants.RoleAdmin), supportHandler.ListChatRequests)
+		}
 
 		staff := api.Group("/staff")
 		{
@@ -175,7 +206,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	}
 
 	r.NoRoute(func(c *gin.Context) {
-		c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"code": constants.UserNotFound, "message": "not found", "details": nil}, "meta": gin.H{"request_id": c.GetString(constants.RequestIDKey)}})
+		httpx.Fail(c, domain.NewError(constants.UserNotFound, "not found"))
 	})
 
 	return r
