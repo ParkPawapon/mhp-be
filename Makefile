@@ -1,12 +1,15 @@
 APP_NAME=stin-smart-care-be
 
-.PHONY: dev test lint migrate-up migrate-down seed gen-jwt-secret
+.PHONY: dev test lint migrate-up migrate-down seed gen-jwt-secret test-integration
 
 dev:
 	go run ./cmd/api
 
 test:
 	go test ./...
+
+test-integration:
+	go test -tags=integration ./internal/repositories
 
 lint:
 	golangci-lint run

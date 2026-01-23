@@ -41,6 +41,17 @@ Production backend for STIN Smart Care (Mobile + Web). This service uses Go, Gin
 - SQL migrations are the source of truth.
 - Run `make migrate-up` and `make migrate-down`.
 
+## Testing
+- Unit tests:
+  ```bash
+  make test
+  ```
+- Integration tests (requires running PostgreSQL):
+  ```bash
+  docker compose up -d postgres
+  make test-integration
+  ```
+
 ## Health & Metrics
 - `GET /healthz`
 - `GET /readyz`

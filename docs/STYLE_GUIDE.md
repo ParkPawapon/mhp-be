@@ -38,6 +38,7 @@
 - Unit tests named `*_test.go` with table-driven cases.
 - Service tests use fakes/mocks for repositories.
 - Handler tests use `httptest` and assert envelope.
+- Integration tests use `//go:build integration` and run against a dockerized PostgreSQL instance.
 
 ## Transactions
 - Transactions only in services using repository interfaces that accept `*gorm.DB` when needed.
